@@ -70,7 +70,7 @@ day_name = today_date.strftime("%A")
 formatted_date = today_date.strftime("%d %B %Y")
 today_str = today_date.strftime("%Y-%m-%d")
 
-# ----------------- SIDEBAR (ONLY QUICK CONTROLS) -----------------
+# ----------------- SIDEBAR -----------------
 with st.sidebar:
     st.title("🎯 दीपक जी का वर्कस्पेस")
     st.caption("NDPS • Life Coaching • Personal Vault")
@@ -104,6 +104,45 @@ with st.sidebar:
             save_data(data)
             st.success("टास्क जुड़ गया!")
             st.rerun()
+
+    # --- 🛡️ बैकअप और रिस्टोर टूल ---
+    st.divider()
+    st.subheader("🛡️ डेटा सुरक्षा व बैकअप")
+    
+    # 1. पूरा डेटा एक साथ JSON में पैक करना
+    all_vault_data = {
+        "priority_data": data,
+        "journal_vault": journal_entries,
+        "energy_audit": audit_history,
+        "backup_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    json_bytes = json.dumps(all_vault_data, ensure_ascii=False, indent=2).encode('utf-8')
+    
+    st.download_button(
+        label="⬇️ पूरा डेटा बैकअप डाउनलोड करें",
+        data=json_bytes,
+        file_name=f"Deepak_Workspace_Backup_{today_str}.json",
+        mime="application/json",
+        use_container_width=True
+    )
+    
+    with st.expander("♻️ पुराना बैकअप रिस्टोर करें"):
+        uploaded_backup = st.file_uploader("बैकअप JSON चुनें:", type=["json"])
+        if uploaded_backup is not None:
+            if st.button("डेटा रिस्टोर करें (Confirm)", type="primary", use_container_width=True):
+                try:
+                    loaded = json.load(uploaded_backup)
+                    if "priority_data" in loaded:
+                        save_data(loaded["priority_data"])
+                    if "journal_vault" in loaded:
+                        save_journal(loaded["journal_vault"])
+                    if "energy_audit" in loaded:
+                        save_audit(loaded["energy_audit"])
+                    st.success("डेटा सफलतापूर्वक रिस्टोर हो गया!")
+                    time.sleep(1)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"फ़ाइल पढ़ने में त्रुटि: {str(e)}")
 
 # ----------------- TOP HORIZONTAL TABS -----------------
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
